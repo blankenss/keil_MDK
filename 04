@@ -1,0 +1,100 @@
+//systick.c
+
+#include "systick.h"
+
+u8 fac_us;
+u16 fac_ms;
+
+void systick_init(u8 systemCLk){
+
+    //1.把系统时钟做8分频处理
+    SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8);
+    //计算出每us 和每ms 时钟震动的次数
+    fac_us=systemCLk/8;
+    fac_ms=systemCLk/8*1000;
+
+}
+
+
+void delay_us(u16 us){
+    //1.计算出用延迟的时间对应的滴答次数
+    //2.把震动的次数赋值给RELOAD寄存器
+    SysTick->LOAD=us*fac_us;
+    //3.为了保险起见  最好把VAL寄存器清零
+    SysTick->VAL=0x00;
+    //4.开始计时  状态控制寄存器的第一个bit 设置位 ENABLE
+    SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
+    //5.检查计时是否结束   状态控制寄存器的第16个bit位 是不是1   是1本轮计时就结束了
+    u32 temp;//把CTRL寄存器的值取出来 作为一个临时存储
+    do{
+        temp=SysTick->CTRL;
+        //1.已经开启了计时功能  同时 第16个bit位必须 是1-循环该结束  
+    }while (temp&0x01 && !(temp&1<<16) );
+
+    //6.关闭定时器 最低位 设置位0
+    SysTick->CTRL &=  ~SysTick_CTRL_ENABLE_Msk;
+
+    //7.为了保险 最好把VAL寄存器清零
+    SysTick->VAL=0x00;
+
+
+
+}
+
+void delay_ms(u16 ms){
+     //1.计算出用延迟的时间对应的滴答次数
+    //2.把震动的次数赋值给RELOAD寄存器
+    SysTick->LOAD=ms*fac_ms;
+    //3.为了保险起见  最好把VAL寄存器清零
+    SysTick->VAL=0x00;
+    //4.开始计时  状态控制寄存器的第一个bit 设置位 ENABLE
+    SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
+    //5.检查计时是否结束   状态控制寄存器的第16个bit位 是不是1   是1本轮计时就结束了
+    u32 temp;//把CTRL寄存器的值取出来 作为一个临时存储
+    do{
+        temp=SysTick->CTRL;
+        //1.已经开启了计时功能  同时 第16个bit位必须 是1-循环该结束  
+    }while (temp&0x01 && !(temp&1<<16) );
+
+    //6.关闭定时器 最低位 设置位0
+    SysTick->CTRL &=  ~SysTick_CTRL_ENABLE_Msk;
+
+    //7.为了保险 最好把VAL寄存器清零
+    SysTick->VAL=0x00;
+}
+
+
+//main.c
+
+#include "stm32f10x.h"
+#include "system.h"
+#include "systick.h"
+
+//PC13的ODR寄存器地址值
+#define LED PCout(13)
+
+int main()
+{
+	systick_init(72);
+
+	//时钟使能
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC,ENABLE);
+	
+	//配置GPIO工作模式
+	GPIO_InitTypeDef initDef;
+	initDef.GPIO_Pin=GPIO_Pin_13;
+	initDef.GPIO_Mode=GPIO_Mode_Out_PP;
+	initDef.GPIO_Speed=GPIO_Speed_50MHz;
+	GPIO_Init(GPIOC,&initDef);
+	
+	
+	LED=1;//不亮
+	while(1){
+		LED=!LED;
+
+		delay_ms(1000);
+	}
+
+}
+
+
