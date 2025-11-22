@@ -1,0 +1,30 @@
+//marquee.c
+
+#include "marquee.h"
+
+void led_init(void)
+{
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA,ENABLE);
+
+    GPIO_InitTypeDef GPIO_struct;
+    GPIO_struct.GPIO_Mode=GPIO_Mode_Out_PP;
+    GPIO_struct.GPIO_Pin=GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_3|GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_7;
+    GPIO_struct.GPIO_Speed=GPIO_Speed_50MHz;
+
+    GPIO_Init(GPIOA,&GPIO_struct);
+}
+
+void flow_led(u16 ms)
+{
+    u8 i;
+    while(1)
+    {
+        GPIOA->BSRR=0x00FF;
+        for(i=0;i<8;i++){
+            GPIOA->BRR=(1<<i);
+            delay_ms(ms);
+            GPIOA->BSRR=(1<<i);
+        }
+    }
+    
+}
