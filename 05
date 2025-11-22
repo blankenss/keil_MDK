@@ -1,0 +1,43 @@
+//main.c
+include "stm32f10x.h"
+#include "beep.h"
+#include "systick.h"
+
+int main()
+{
+	beep_init();
+	delay_init();
+	while(1)
+	{
+		beep(10,1000);
+//		delay_us(1000);
+	}
+}
+//beep.c
+
+#include "beep.h"
+
+void beep_init(void)
+{
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB,ENABLE);
+
+    GPIO_InitTypeDef GPIO_struct;
+    GPIO_struct.GPIO_Mode=GPIO_Mode_Out_PP;
+    GPIO_struct.GPIO_Pin=GPIO_Pin_0;
+    GPIO_struct.GPIO_Speed=GPIO_Speed_50MHz;
+
+    GPIO_Init(GPIOB,&GPIO_struct);
+    GPIO_ResetBits(GPIOB,GPIO_Pin_0);
+}
+
+void beep(u8 times,u16 us)
+{
+    while(times--)
+    {
+        GPIO_SetBits(GPIOB,GPIO_Pin_0);
+        delay_us(us);
+        GPIO_ResetBits(GPIOB,GPIO_Pin_0);
+        delay_us(us);
+    }
+}
+
